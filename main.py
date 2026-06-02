@@ -1,7 +1,7 @@
 import sys
 import os
 from brain import Brain
-
+import tools
 def main():
     # Initialize your unified AI core
     try:
@@ -71,14 +71,14 @@ def main():
                 print("🌐 Intent Detected [WEB_SEARCH]: Internet grounding required.")
                 print(f"   Optimized Search Query: '{intent.optimized_prompt}'")
                 
-                # PLACEHOLDER: Next week when you build tools.py, replace this mock text
-                # with: search_results = tools.web_search_tool(intent.optimized_prompt)
-                print("   [System Status]: Scraping live data matrices via DuckDuckGo...")
-                mock_search_results = f"Simulated live internet data for: {intent.optimized_prompt}. Market structure shows high volatility."
+                # 🔥 THE REAL DEAL: Execute the live LangChain DuckDuckGo tool
+                search_raw_results = tools.web_search_tool(intent.optimized_prompt)
                 
-                # Let the voice engine read out the live data results naturally
-                jarvis.generate_jarvis_voice(f"Web intelligence retrieved, Boss. {mock_search_results}")
-
+                print(f"\n[🌐 Live Raw Snippets Retrieved]:\n{search_raw_results}\n")
+                
+                # Feed the real-time internet data directly into Jarvis's voice module
+                # The model will synthesize the data and read it using the British archetype!
+                jarvis.generate_jarvis_voice(f"Web intelligence retrieved, Boss. Here are the findings: {search_raw_results}")
             # ----------------------------------------------------
             # CASE 5: General Conversational Small Talk / Greetings
             # ----------------------------------------------------
