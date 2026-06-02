@@ -73,12 +73,12 @@ def main():
                 
                 # 🔥 THE REAL DEAL: Execute the live LangChain DuckDuckGo tool
                 search_raw_results = tools.web_search_tool(intent.optimized_prompt)
-                
+                refine_search = jarvis.refine_search_results(intent.optimized_prompt, search_raw_results)
                 print(f"\n[🌐 Live Raw Snippets Retrieved]:\n{search_raw_results}\n")
                 
                 # Feed the real-time internet data directly into Jarvis's voice module
                 # The model will synthesize the data and read it using the British archetype!
-                jarvis.generate_jarvis_voice(f"Web intelligence retrieved, Boss. Here are the findings: {search_raw_results}")
+                jarvis.generate_jarvis_voice(f"Web intelligence retrieved, Boss. Here are the findings: {refine_search}")
             # ----------------------------------------------------
             # CASE 5: General Conversational Small Talk / Greetings
             # ----------------------------------------------------

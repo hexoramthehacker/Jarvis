@@ -136,4 +136,34 @@ class Brain:
         except Exception as e:
             print(f"Jarvis voice engine error: {e}")
             return False
-        
+    def refine_search_results(self, query, raw_snippets):
+        """
+        Synthesis Stage: Takes messy, raw web-search arrays and condenses them
+        into a sharp, conversational verbal summary tailored to the original query.
+        """
+        try:
+            print("🧠 Jarvis is synthesizing web intelligence...")
+            
+            synthesis_instruction = """
+            You are Jarvis's information synthesis core. Your job is to take raw web search snippets and extract the exact, up-to-date answer to the user's query.
+            
+            Synthesize the data into a highly concise, natural, conversational summary (maximum 2-3 sentences). 
+            - Completely strip out metadata tags like 'snippet:', 'title:', 'link:', and raw URLs.
+            - Focus heavily on delivering the direct facts (e.g., specific stock prices, match scores, or news updates).
+            - Ensure the text is written exactly how a smooth British assistant would speak it out loud. Do not use markdown bolding or bullet points in this output.
+            """
+            
+            # We pass both the original question and the raw data so the model has full context
+            response = self.client.models.generate_content(
+                model="gemini-3.5-flash",
+                contents=f"User Query: {query}\n\nRaw Search Snippets:\n{raw_snippets}",
+                config=types.GenerateContentConfig(
+                    system_instruction=synthesis_instruction
+                )
+            )
+            return response.text
+            
+        except Exception as e:
+            print(f"⚠️ Synthesis failed: {e}")
+            # Fallback to a truncated version of the raw results so the loop doesn't break
+            return f"I have the raw data regarding {query}, but failed to refine it."
