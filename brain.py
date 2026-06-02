@@ -5,8 +5,12 @@ import os
 import winsound
 import wave
 import io
+from pydantic import BaseModel
+from typing import Literal
 load_dotenv() # Load environment variables from .env file
-
+class UserCommand(BaseModel):
+    action: Literal["EXIT", "WEB_SEARCH", "NORMAL_CHAT", "COMPLEX_TASK", "IMAGE_GEN"]  # <-- ADDED IMAGE_GEN
+    optimized_prompt: str
 class Brain:
     def __init__(self):
         self.client = genai.Client(api_key=os.getenv("Jarv"))  # Use the API key from the environment variable
@@ -20,10 +24,48 @@ class Brain:
         
         Transcript Guidelines: Keep spoken responses highly concise, scannable, and practical. Cut out corporate fluff, introductory filler phrases, and unnecessary apologies.
         """
+        self.planner_instructions = """
+        You are Jarvis's internal engineering and strategy core. Your job is to take a short, raw user command and expand it into an efficient, highly detailed, step-by-step execution prompt.
+        
+        Analyze the task at hand (e.g., Coding, Cybersecurity, Data Analysis, or Forex Market Structure) and inject the exact technical constraints, optimal libraries, and clean structural requirements needed to make the execution flawless. 
+        
+        Output ONLY the expanded prompt string. Do not write any introduction, pleasantries, or closing chat filler. Go straight into the optimized instructions.
+        """
+        self.router_instructions = """
+        You are Jarvis's intent routing core. Analyze the user's input and classify it accurately:
+        - If they say goodbye, goodnight, or imply ending the session, set action to 'EXIT'.
+        - If they ask for real-time news, current asset prices, or web-dependent facts, set action to 'WEB_SEARCH'.
+        - If they want to draw, paint, visualize, create a graphic asset, or generate an image, set action to 'IMAGE_GEN'.
+        - If it is basic small talk, simple greetings, or casual chatter, set action to 'NORMAL_CHAT'.
+        - If it is a development request, cybersecurity concept, or deep analytical problem, set action to 'COMPLEX_TASK'.
+        
+        For optimized_prompt: Pass a clean, normalized version of the user's core question or command.
+    
+        """
+    def route_user_intent(self, user_input) -> UserCommand:
+        """
+        Gatekeeper Stage: Forces Gemini to return a structured JSON object
+        classifying the user's action and cleaning the prompt.
+        """
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-3.5-flash",
+                contents=user_input,
+                config=types.GenerateContentConfig(
+                    system_instruction=self.router_instructions,
+                    response_mime_type="application/json",
+                    response_schema=UserCommand,
+                )
+            )
+            return response.parsed
+        except Exception as e:
+            print(f"⚠️ Routing Core Fallback triggered: {e}")
+            return UserCommand(action="NORMAL_CHAT", optimized_prompt=user_input)
     def generate_content(self, prompt):
         response = self.client.models.generate_content(
             model="gemini-3.5-flash",
-            contents=prompt,
+            contents=f"Expand this command for maximum engineering efficiency: {prompt}",
+            system_instructions=self.planner_instructions
         )
         return response.text
     def generate_image_imagen(self, prompt):
