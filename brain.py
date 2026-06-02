@@ -81,9 +81,7 @@ class Brain:
             return True
 
         except Exception as e:
-            print(f"❌ Jarvis voice engine error: {e}")
+            print(f"Jarvis voice engine error: {e}")
             return False
             
 
-c = Brain()
-c.generate_jarvis_voice("what is the weather like today?")
