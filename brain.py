@@ -9,11 +9,11 @@ from pydantic import BaseModel
 from typing import Literal
 load_dotenv() # Load environment variables from .env file
 class UserCommand(BaseModel):
-    action: Literal["EXIT", "WEB_SEARCH", "NORMAL_CHAT", "COMPLEX_TASK", "IMAGE_GEN"]  # <-- ADDED IMAGE_GEN
+    action: Literal["EXIT", "WEB_SEARCH", "NORMAL_CHAT", "COMPLEX_TASK", "IMAGE_GEN" ]  # <-- ADDED IMAGE_GEN
     optimized_prompt: str
 class Brain:
     def __init__(self):
-        self.client = genai.Client(api_key=os.getenv("Jarv"))  # Use the API key from the environment variable
+        self.client = genai.Client(api_key=os.getenv("Jarai"))  # Use the API key from the environment variable
         # Define the exact Jarvis persona configuration
         self.jarvis_instructions = """
         Audio Profile: Jarvis, the ultimate sovereign digital butler and technical co-pilot. Elite British Polymath archetype. Vocal texture of a calm, grounded 25-year-old male. Flawless British Received Pronunciation (RP).
@@ -59,24 +59,35 @@ class Brain:
             )
             return response.parsed
         except Exception as e:
-            print(f"⚠️ Routing Core Fallback triggered: {e}")
+            print(f"Routing Core Fallback triggered: {e}")
             return UserCommand(action="NORMAL_CHAT", optimized_prompt=user_input)
     def generate_content(self, prompt):
-        response = self.client.models.generate_content(
-            model="gemini-3.5-flash",
-            contents=f"Expand this command for maximum engineering efficiency: {prompt}",
-            system_instructions=self.planner_instructions
-        )
-        return response.text
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-3.5-flash",
+                contents=f"Expand this command for maximum engineering efficiency: {prompt}",
+                config=types.GenerateContentConfig(system_instruction=self.planner_instructions))
+            return response.text        
+        except Exception as e:
+            print(f"Planning Core Fallback triggered: {e}")
+
+        
     def generate_image_imagen(self, prompt):
         # Use generate_image with the proper Imagen model and prompt kwarg
-        response = self.client.models.generate_image(
-            model="imagen-3.0-generate-002",
-            prompt=prompt,
-        )
-        # Imagen returns a clean list of images directly
-        for generated_image in response.generated_images:
-            generated_image.image.save("generated_image.png")
+        try:
+            response = self.client.models.generate_content(
+                model="gemini-2.5-flash-image",##gemini-3.1-flash-image
+                contents = [prompt]
+            )
+            # Imagen returns a clean list of images directly
+            for part in response.parts:
+                if part.text is not None:
+                    print(part.text)
+                elif part.inline_data is not None:
+                    image = part.as_image()
+                    image.save("generated_image.png")
+        except Exception as e:
+            print(f"Image generation error: {e}")
         
     def generate_jarvis_voice(self, prompt):
         """
@@ -88,7 +99,7 @@ class Brain:
             full_prompt = f"{self.jarvis_instructions}\n\nTranscript:\n{prompt}"
             # 1. Fire the API request with corrected closing parentheses
             response = self.client.models.generate_content(
-                model="gemini-3.1-flash-tts-preview",
+                model="gemini-2.5-flash-preview-tts",#gemini-3.1-flash-tts-preview
                 contents=full_prompt,
                 config=types.GenerateContentConfig(
                     response_modalities=["AUDIO"],
@@ -125,5 +136,4 @@ class Brain:
         except Exception as e:
             print(f"Jarvis voice engine error: {e}")
             return False
-            
-
+        
